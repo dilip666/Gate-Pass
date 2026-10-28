@@ -158,7 +158,29 @@
   
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-  
+  <script src="firebase-config.js"></script>
+<script>
+  window.firebaseReady = false;
+  window.firebaseDB = null;
+
+  try {
+    if (typeof firebase !== "undefined" &&
+        window.firebaseConfig &&
+        firebase.apps.length === 0) {
+      firebase.initializeApp(window.firebaseConfig);
+    }
+
+    if (typeof firebase !== "undefined" && firebase.apps.length > 0) {
+      window.firebaseDB = firebase.firestore();
+      window.firebaseReady = true;
+      console.log("Firebase initialized successfully.");
+    } else {
+      console.error("Firebase SDK or configuration not loaded.");
+    }
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+  }
+</script>
 <script>
 (function () {
   'use strict';
