@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>School Gate Entry</title>
+<style>
+  :root{--navy:#0f1f4b;--ink:#101828;--muted:#475467;--line:#d0d5dd;--bg:#f2f4f7;--ok:#0b7a2b;--bad:#b42318;--warn:#b54708;--blue:#1849a9}
+  *{box-sizing:border-box}
+  html,body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  [hidden]{display:none!important}
+  .banner{background:var(--bad);color:#fff;text-align:center;font-weight:800;padding:12px;font-size:1.1rem}
+  .banner.info{background:var(--warn)}
+  header{background:var(--navy);color:#fff;padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  header h1{margin:0;font-size:1.2rem} header p{margin:2px 0 0;font-size:.9rem;opacity:.9}
+  .hright{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.9rem}
+  #clock{font-weight:700;font-variant-numeric:tabular-nums}
+  .chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 12px;border-radius:8px;font:inherit;font-size:.95rem;cursor:pointer}
+  main{max-width:1100px;margin:0 auto;padding:14px;display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:900px){main{grid-template-columns:1.3fr 1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+  .card h2{margin:0 0 10px;font-size:1.05rem}
+  .side{display:flex;flex-direction:column;gap:14px}
+  #reader{width:100%;min-height:260px;background:#000;border-radius:10px;overflow:hidden}
+  .status{margin:12px 0;padding:12px;border-radius:10px;font-weight:700;background:#eef2f6;border:1px solid var(--line)}
+  .status.ready{background:#ecfdf3;border-color:#6ce9a6;color:#05603a}
+  .status.info{background:#eff4ff;border-color:#b2ccff;color:var(--blue)}
+  .status.err{background:#fef3f2;border-color:#fda29b;color:var(--bad)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  button,.btn{font:inherit;font-weight:800;font-size:1.05rem;padding:15px 18px;border-radius:12px;border:0;cursor:pointer;flex:1 1 130px;text-align:center}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .primary{background:var(--ok);color:#fff}.danger{background:var(--bad);color:#fff}
+  .neutral{background:#fff;color:var(--ink);border:2px solid var(--ink)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{border-radius:12px;padding:14px;text-align:center;color:#fff}
+  .stat b{display:block;font-size:2.2rem;line-height:1}.stat span{font-size:.85rem;font-weight:700}
+  .stat.a{background:var(--ok)}.stat.r{background:var(--bad)}
+  input[type=text],input[type=number]{width:100%;padding:13px;font-size:1.1rem;border:2px solid var(--line);border-radius:10px;margin-bottom:10px}
+  input:focus{outline:3px solid #84adff;border-color:var(--blue)}
+  label.f{display:block;font-weight:700;font-size:.9rem;margin:6px 0 4px}
+  ul.results{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}
+  ul.results li{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .tag{font-size:.8rem;font-weight:800;padding:4px 8px;border-radius:99px;color:#fff;white-space:nowrap}
+  .tag.ok{background:var(--ok)}.tag.bad{background:var(--bad)}.tag.grey{background:#667085}
+  .small{color:var(--muted);font-size:.9rem}
+  #overlay{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff;cursor:pointer}
+  #overlay.ok{background:var(--ok)}#overlay.bad{background:var(--bad)}#overlay.warn{background:var(--warn)}
+  #ovIcon{font-size:clamp(5rem,22vw,10rem);line-height:1}
+  #ovMsg{font-size:clamp(1.6rem,6vw,3rem);font-weight:900;margin:12px 0 20px;max-width:900px}
+  #ovDetails{background:rgba(0,0,0,.22);border-radius:16px;padding:16px 24px;min-width:min(92vw,460px);font-size:clamp(1.1rem,3.6vw,1.6rem);text-align:left}
+  #ovDetails div{display:flex;justify-content:space-between;gap:20px;padding:4px 0}
+  #ovDetails div span:last-child{font-weight:800;text-align:right}
+  #ovBar{width:min(92vw,460px);height:8px;background:rgba(255,255,255,.3);border-radius:99px;margin-top:22px;overflow:hidden}
+  #ovFill{height:100%;width:100%;background:#fff}
+  #setup{position:fixed;inset:0;z-index:40;background:rgba(16,24,40,.6);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto}
+  .modal{background:#fff;border-radius:14px;padding:16px;width:min(900px,100%)}
+  .grid2{display:grid;gap:12px;grid-template-columns:1fr}@media(min-width:700px){.grid2{grid-template-columns:1fr 1fr}}
+  .tablewrap{overflow:auto;max-height:40vh;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+  table{border-collapse:collapse;width:100%;font-size:.85rem}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{position:sticky;top:0;background:#eef2f6}
+</style>
+</head>
+<body>
+<div id="noData" class="banner info" hidden>No student data loaded — open ⚙ Setup and upload the Excel file.</div>
+<div id="disabledBanner" class="banner" hidden>ENTRY SYSTEM TEMPORARILY DISABLED</div>
+
+<header>
+  <div><h1 id="hSchool">School</h1><p><span id="hEvent">Event</span> · <span id="hGate">Gate</span></p></div>
+  <div class="hright">
+    <span id="clock"></span>
+    <button class="chip" id="btnMute" type="button">🔊 Sound on</button>
+    <button class="chip" id="btnSetup" type="button">⚙ Setup</button>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Scan QR Code</h2>
+    <div id="reader"></div>
+    <div id="status" class="status">Camera is off. Tap “Start Camera”.</div>
+    <div class="btnrow">
+      <button id="btnStart" class="primary" type="button">▶ Start Camera</button>
+      <button id="btnStop" class="danger" type="button" disabled>■ Stop Camera</button>
+    </div>
+    <div class="btnrow">
+      <label class="btn neutral" for="fileIn">📷 Scan from a photo</label>
+      <input id="fileIn" type="file" accept="image/*" capture="environment" hidden>
+    </div>
+  </section>
+  <div class="side">
+    <section class="card">
+      <h2>Totals</h2>
+      <div class="stats">
+        <div class="stat a"><b id="stA">0</b><span>APPROVED ENTRIES</span></div>
+        <div class="stat r"><b id="stR">0</b><span>REJECTED ATTEMPTS</span></div>
+      </div>
+      <p class="small" id="stLoaded"></p>
+    </section>
+    <section class="card">
+      <h2>Manual GR Number</h2>
+      <form id="manualForm" autocomplete="off">
+        <input id="manualGr" type="text" placeholder="Type GR number" maxlength="40">
+        <button class="primary" type="submit" style="width:100%">Verify &amp; Enter</button>
+      </form>
+    </section>
+    <section class="card">
+      <h2>Student Lookup</h2>
+      <form id="lookupForm" autocomplete="off">
+        <input id="lookupQ" type="text" placeholder="GR number or name (min 2 letters)" maxlength="60">
+        <button class="neutral" type="submit" style="width:100%">Search</button>
+      </form>
+      <ul id="lookupList" class="results"></ul>
+    </section>
+  </div>
+</main>
+
+<div id="overlay" hidden>
+  <div id="ovIcon"></div><div id="ovMsg"></div><div id="ovDetails"></div>
+  <div id="ovBar"><div id="ovFill"></div></div>
+  <div class="small" style="color:#fff;margin-top:10px">Tap anywhere to continue</div>
+</div>
+
+<div id="setup" hidden>
+  <div class="modal">
+    <h2>Setup &amp; Admin</h2>
+    <div class="grid2">
+      <div>
+        <label class="f">Student Excel / CSV file (columns: GR_No, Student_Name, Class, Section, Status)</label>
+        <input id="xlsIn" type="file" accept=".xlsx,.xls,.csv">
+        <p class="small" id="loadMsg"></p>
+        <label class="f">School name</label><input id="cSchool" type="text">
+        <label class="f">Event name</label><input id="cEvent" type="text">
+        <label class="f">Gate name</label><input id="cGate" type="text">
+        <label class="f">Result screen seconds (1–30)</label><input id="cDelay" type="number" min="1" max="30">
+        <label class="f">Scanned by (your name)</label><input id="cBy" type="text">
+        <label class="f"><input id="cEnabled" type="checkbox" style="width:auto;margin-right:8px">Entry system enabled</label>
+        <button id="btnSave" class="primary" type="button" style="width:100%">Save settings</button>
+      </div>
+      <div>
+        <div class="btnrow" style="margin-top:0">
+          <button id="btnExport" class="neutral" type="button">⬇ Export entry log (Excel)</button>
+          <button id="btnRefresh" class="neutral" type="button">↻ Refresh log</button>
+        </div>
+        <label class="f">Start a new event (erases all entries on THIS device) — type RESET</label>
+        <input id="resetTxt" type="text" placeholder="RESET">
+        <button id="btnReset" class="danger" type="button" style="width:100%">Erase entry log</button>
+        <p class="small" id="adminMsg"></p>
+        <div class="tablewrap"><table><thead><tr><th>Time</th><th>GR</th><th>Name</th><th>Class</th><th>Result</th><th>By</th></tr></thead><tbody id="logBody"></tbody></table></div>
+      </div>
+    </div>
+    <div class="btnrow"><button id="btnCloseSetup" class="neutral" type="button">Close</button></div>
+  </div>
+</div>
+<div id="hiddenReader" style="display:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var K = { students: 'gp_students', log: 'gp_log', cfg: 'gp_cfg' };
+  var cfg = { school: 'My School', event: 'School Event', gate: 'Main Gate', delay: 3, by: '', enabled: true };
+  var students = new Map();
+  var st = { scanner: null, scanning: false, busy: false, muted: false, lastCode: '', ignoreUntil: 0, timer: null };
+
+  // ---------- storage ----------
+  function jget(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function jset(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function loadCfg() { var c = jget(K.cfg, {}); Object.keys(c).forEach(function (k) { cfg[k] = c[k]; }); }
+  function loadStudents() {
+    students = new Map();
+    jget(K.students, []).forEach(function (r) { students.set(r[0], { gr: r[0], name: r[1], cls: r[2], sec: r[3], active: r[4] === 1 }); });
+  }
+  function readLog() { return jget(K.log, []); }
+  function normalize(v) {
+    var s = String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]/g, '').trim();
+    return (s && s.length <= 32 && /^[A-Za-z0-9][A-Za-z0-9._\-\/]*$/.test(s)) ? s : '';
+  }
+  function fmt(t) { return new Date(t).toLocaleString([], { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+
+  // ---------- the decision (atomic: lock + re-read log + check + write) ----------
+  function decide(raw) {
+    var gr = normalize(raw);
+    if (!gr) return { status: 'INVALID', message: 'INVALID QR CODE — PLEASE SCAN AGAIN.' };
+    if (!cfg.enabled) return { status: 'DISABLED', message: 'ENTRY SYSTEM TEMPORARILY DISABLED.' };
+    if (!students.size) return { status: 'ERROR', message: 'NO STUDENT DATA LOADED — ENTRY NOT APPROVED.' };
+    try {
+      var log = readLog(), s = students.get(gr), now = Date.now();
+      function add(res, name, cls) { log.push({ t: now, gr: gr, name: name || '', cls: cls || '', gate: cfg.gate, res: res, by: cfg.by || 'Gate staff' }); jset(K.log, log); }
+      if (!s) { add('NOT_FOUND_REJECTED'); return { status: 'NOT_FOUND', message: 'INVALID QR CODE — GR NUMBER NOT FOUND.', gr: gr }; }
+      var pub = { gr: s.gr, name: s.name, cls: s.cls, sec: s.sec };
+      if (!s.active) { add('INACTIVE_REJECTED', s.name, s.cls); return { status: 'INACTIVE', message: 'ENTRY DENIED — STUDENT STATUS INACTIVE.', s: pub }; }
+      var first = null;
+      for (var i = 0; i < log.length; i++) if (log[i].gr === gr && log[i].res === 'APPROVED') { first = log[i]; break; }
+      if (first) { add('DUPLICATE_REJECTED', s.name, s.cls); return { status: 'DUPLICATE', message: 'ENTRY DENIED — THIS STUDENT HAS ALREADY ENTERED.', s: pub, first: first.t }; }
+      add('APPROVED', s.name, s.cls);
+      return { status: 'APPROVED', message: 'ENTRY APPROVED — WELCOME!', s: pub, at: now };
+    } catch (e) {
+      return { status: 'ERROR', message: 'STORAGE ERROR — ENTRY NOT APPROVED. ' + e.message };
+    }
+  }
+  function decideLocked(raw) {
+    if (navigator.locks && navigator.locks.request) return navigator.locks.request('gp_gate', function () { return decide(raw); });
+    return Promise.resolve(decide(raw));
+  }
+
+  // ---------- audio ----------
+  var ac = null;
+  function unlock() { try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} }
+  function tone(f, t, d, ty) { var o = ac.createOscillator(), g = ac.createGain(); o.type = ty; o.frequency.value = f; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.4, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + .05); }
+  function beep(ok) { if (st.muted || !ac) return; try { var t = ac.currentTime; if (ok) { tone(660, t, .12, 'sine'); tone(990, t + .15, .25, 'sine'); } else { tone(220, t, .35, 'sawtooth'); tone(160, t + .42, .45, 'sawtooth'); } } catch (e) {} }
+  $('btnMute').onclick = function () { st.muted = !st.muted; this.textContent = st.muted ? '🔇 Sound off' : '🔊 Sound on'; unlock(); };
+
+  // ---------- UI helpers ----------
+  setInterval(function () { $('clock').textContent = new Date().toLocaleString([], { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' }); }, 1000);
+  function setStatus(t, k) { $('status').textContent = t; $('status').className = 'status' + (k ? ' ' + k : ''); }
+  function idle() { st.scanning ? setStatus('Ready — point the camera at a student QR code.', 'ready') : setStatus('Camera is off. Tap “Start Camera”.', ''); }
+  function render() {
+    $('hSchool').textContent = cfg.school; $('hEvent').textContent = cfg.event; $('hGate').textContent = cfg.gate;
+    $('disabledBanner').hidden = !!cfg.enabled; $('noData').hidden = students.size > 0;
+    var log = readLog(), a = 0, r = 0;
+    log.forEach(function (x) { x.res === 'APPROVED' ? a++ : r++; });
+    $('stA').textContent = a; $('stR').textContent = r;
+    $('stLoaded').textContent = students.size + ' students loaded on this device';
+  }
+
+  // ---------- scanner ----------
+  function startCamera() {
+    unlock(); if (st.scanning) return;
+    if (typeof Html5Qrcode === 'undefined') { setStatus('QR library failed to load (needs internet). Use manual entry.', 'err'); return; }
+    if (!st.scanner) st.scanner = new Html5Qrcode('reader');
+    setStatus('Starting camera…', 'info');
+    st.scanner.start({ facingMode: 'environment' },
+      { fps: 10, qrbox: function (w, h) { var m = Math.floor(Math.min(w, h) * .7); return { width: m, height: m }; } },
+      onScan, function () {})
+    .then(function () { st.scanning = true; $('btnStart').disabled = true; $('btnStop').disabled = false; idle(); })
+    .catch(function (e) {
+      var m = String((e && e.message) || e);
+      setStatus(/permission|denied|notallowed/i.test(m) ? 'Camera access denied. Tap the 🔒 icon in the address bar, allow Camera, then reload.' :
+        (/notfound|requested device/i.test(m) ? 'No camera found. Use manual entry.' : 'Could not start camera: ' + m), 'err');
+    });
+  }
+  function stopCamera() {
+    if (!st.scanner || !st.scanning) return;
+    st.scanner.stop().then(function () { st.scanning = false; $('btnStart').disabled = false; $('btnStop').disabled = true; idle(); });
+  }
+  function pause() { if (st.scanning) try { st.scanner.pause(true); } catch (e) {} }
+  function resume() { if (st.scanning) try { st.scanner.resume(); } catch (e) {} }
+  function onScan(text) { if (st.busy) return; if (text === st.lastCode && Date.now() < st.ignoreUntil) return; handle(text); }
+  $('btnStart').onclick = startCamera; $('btnStop').onclick = stopCamera;
+
+  function handle(raw) {
+    if (st.busy) return; st.busy = true; pause();
+    var code = String(raw == null ? '' : raw).trim().slice(0, 200); st.lastCode = code;
+    if (!code) { show({ status: 'INVALID', message: 'INVALID QR CODE — PLEASE SCAN AGAIN.' }); return; }
+    setStatus('Verifying ' + code + ' …', 'info');
+    decideLocked(code).then(show);
+  }
+
+  function show(r) {
+    var cls = { APPROVED: 'ok', DUPLICATE: 'bad', NOT_FOUND: 'bad', INACTIVE: 'bad' }[r.status] || 'warn';
+    var ov = $('overlay'); ov.className = cls;
+    $('ovIcon').textContent = cls === 'ok' ? '✔' : cls === 'bad' ? '✖' : '⚠';
+    $('ovMsg').textContent = r.message;
+    var d = $('ovDetails'); d.textContent = '';
+    function row(l, v) { if (!v) return; var x = document.createElement('div'), a = document.createElement('span'), b = document.createElement('span'); a.textContent = l; b.textContent = v; x.appendChild(a); x.appendChild(b); d.appendChild(x); }
+    if (r.s) { row('Name', r.s.name); row('GR No', r.s.gr); row('Class', [r.s.cls, r.s.sec].filter(Boolean).join(' - ')); }
+    if (r.gr) row('GR No', r.gr);
+    if (r.at) { row('Entry time', fmt(r.at)); row('Status', 'APPROVED'); }
+    if (r.first) { row('First entered at', fmt(r.first)); row('Status', 'ALREADY ENTERED'); }
+    d.hidden = !d.childNodes.length;
+    ov.hidden = false; beep(cls === 'ok');
+    var secs = Math.max(1, Math.min(+cfg.delay || 3, 30)) + (cls === 'ok' ? 0 : 2), f = $('ovFill');
+    f.style.transition = 'none'; f.style.width = '100%'; void f.offsetWidth;
+    f.style.transition = 'width ' + secs + 's linear'; f.style.width = '0%';
+    clearTimeout(st.timer); st.timer = setTimeout(close, secs * 1000);
+    render();
+  }
+  function close() {
+    clearTimeout(st.timer); if ($('overlay').hidden) return;
+    $('overlay').hidden = true; st.ignoreUntil = Date.now() + 4000; st.busy = false; resume(); idle(); render();
+  }
+  $('overlay').onclick = close;
+
+  $('manualForm').onsubmit = function (e) { e.preventDefault(); var v = $('manualGr').value; $('manualGr').value = ''; unlock(); handle(v); };
+  $('fileIn').onchange = function () {
+    var f = this.files && this.files[0]; this.value = ''; if (!f) return; unlock();
+    if (typeof Html5Qrcode === 'undefined') { setStatus('QR library failed to load.', 'err'); return; }
+    setStatus('Reading photo…', 'info');
+    new Html5Qrcode('hiddenReader').scanFile(f, false).then(handle).catch(function () { setStatus('No QR code found in that photo.', 'err'); });
+  };
+
+  // ---------- lookup ----------
+  $('lookupForm').onsubmit = function (e) {
+    e.preventDefault();
+    var ul = $('lookupList'); ul.textContent = '';
+    var q = $('lookupQ').value.trim().toLowerCase(); if (q.length < 2) return;
+    var done = {}; readLog().forEach(function (x) { if (x.res === 'APPROVED' && !done[x.gr]) done[x.gr] = x.t; });
+    var out = [];
+    students.forEach(function (s) { if (out.length < 10 && (s.gr.toLowerCase() === q || s.name.toLowerCase().indexOf(q) >= 0)) out.push(s); });
+    if (!out.length) { var li = document.createElement('li'); li.textContent = 'No match.'; ul.appendChild(li); return; }
+    out.forEach(function (s) {
+      var li = document.createElement('li'), l = document.createElement('div'), b = document.createElement('b'), m = document.createElement('div'), tg = document.createElement('span');
+      b.textContent = s.name; m.className = 'small';
+      m.textContent = s.gr + ' · ' + [s.cls, s.sec].filter(Boolean).join('-') + (done[s.gr] ? ' · in at ' + fmt(done[s.gr]) : '');
+      l.appendChild(b); l.appendChild(m);
+      if (!s.active) { tg.className = 'tag grey'; tg.textContent = 'INACTIVE'; } else if (done[s.gr]) { tg.className = 'tag bad'; tg.textContent = 'ENTERED'; } else { tg.className = 'tag ok'; tg.textContent = 'NOT YET'; }
+      li.appendChild(l); li.appendChild(tg); ul.appendChild(li);
+    });
+  };
+
+  // ---------- setup / admin ----------
+  function openSetup() {
+    $('cSchool').value = cfg.school; $('cEvent').value = cfg.event; $('cGate').value = cfg.gate;
+    $('cDelay').value = cfg.delay; $('cBy').value = cfg.by; $('cEnabled').checked = !!cfg.enabled;
+    $('setup').hidden = false; drawLog();
+  }
+  function drawLog() {
+    var log = readLog(), tb = $('logBody'); tb.textContent = '';
+    log.slice(-200).reverse().forEach(function (x) {
+      var tr = document.createElement('tr');
+      [fmt(x.t), x.gr, x.name, x.cls, x.res, x.by].forEach(function (c) { var td = document.createElement('td'); td.textContent = c; tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+    $('adminMsg').textContent = log.length + ' records on this device (showing latest 200).';
+  }
+  $('btnSetup').onclick = openSetup;
+  $('btnCloseSetup').onclick = function () { $('setup').hidden = true; render(); };
+  $('btnRefresh').onclick = drawLog;
+  $('btnSave').onclick = function () {
+    cfg.school = $('cSchool').value.trim() || 'My School'; cfg.event = $('cEvent').value.trim() || 'School Event';
+    cfg.gate = $('cGate').value.trim() || 'Main Gate'; cfg.delay = Math.max(1, Math.min(+$('cDelay').value || 3, 30));
+    cfg.by = $('cBy').value.trim().slice(0, 40); cfg.enabled = $('cEnabled').checked;
+    try { jset(K.cfg, cfg); $('adminMsg').textContent = 'Settings saved.'; } catch (e) { $('adminMsg').textContent = 'Could not save: ' + e.message; }
+    render();
+  };
+  $('btnReset').onclick = function () {
+    if ($('resetTxt').value.trim() !== 'RESET') { $('adminMsg').textContent = 'Type RESET in the box first.'; return; }
+    jset(K.log, []); $('resetTxt').value = ''; drawLog(); render(); $('adminMsg').textContent = 'Entry log erased. New event started.';
+  };
+  $('btnExport').onclick = function () {
+    if (typeof XLSX === 'undefined') { $('adminMsg').textContent = 'Excel library not loaded (needs internet).'; return; }
+    var rows = [['Timestamp', 'GR_No', 'Student_Name', 'Class', 'Gate', 'Result', 'Scanned_By']];
+    readLog().forEach(function (x) { rows.push([fmt(x.t), x.gr, x.name, x.cls, x.gate, x.res, x.by]); });
+    var ws = XLSX.utils.aoa_to_sheet(rows), wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Entry_Log');
+    XLSX.writeFile(wb, 'Entry_Log_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  };
+
+  // ---------- Excel / CSV import ----------
+  function nh(h) { return String(h).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+  function idx(hs, names) { for (var i = 0; i < hs.length; i++) if (names.indexOf(hs[i]) >= 0) return i; return -1; }
+  $('xlsIn').onchange = function () {
+    var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+    if (typeof XLSX === 'undefined') { $('loadMsg').textContent = 'Excel library not loaded (needs internet).'; return; }
+    var rd = new FileReader();
+    rd.onload = function (e) {
+      try {
+        var wb = XLSX.read(e.target.result, { type: 'array' });
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' });
+        var hs = (rows[0] || []).map(nh);
+        var gi = idx(hs, ['grno', 'gr', 'grnumber', 'grn', 'admissionno', 'admno', 'regno']);
+        var ni = idx(hs, ['studentname', 'name', 'student']), ci = idx(hs, ['class', 'std', 'grade']),
+            si = idx(hs, ['section', 'sec', 'division']), ti = idx(hs, ['status']);
+        if (gi < 0) { $('loadMsg').textContent = 'Column "GR_No" not found in the first row of the first sheet.'; return; }
+        var seen = {}, out = [], dup = 0, inact = 0;
+        for (var i = 1; i < rows.length; i++) {
+          var r = rows[i], gr = String(r[gi] == null ? '' : r[gi]).trim();
+          if (!gr) continue;
+          if (seen[gr]) { dup++; continue; } seen[gr] = 1;
+          var status = ti >= 0 ? String(r[ti]).trim().toLowerCase() : 'active';
+          var act = status === 'active' ? 1 : 0; if (!act) inact++;
+          out.push([gr, ni >= 0 ? String(r[ni]).trim() : '', ci >= 0 ? String(r[ci]).trim() : '', si >= 0 ? String(r[si]).trim() : '', act]);
+        }
+        jset(K.students, out); loadStudents(); render();
+        $('loadMsg').textContent = 'Loaded ' + out.length + ' students (' + inact + ' inactive, ' + dup + ' duplicate GR rows ignored). Existing entries were kept.';
+      } catch (err) { $('loadMsg').textContent = 'Could not read file: ' + err.message; }
+    };
+    rd.readAsArrayBuffer(f);
+  };
+
+  // ---------- boot ----------
+  loadCfg(); loadStudents(); render();
+  window.addEventListener('storage', function () { loadCfg(); loadStudents(); render(); });
+})();
+</script>
+</body>
+</html>
